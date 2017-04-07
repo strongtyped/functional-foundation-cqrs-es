@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>A Functional Foundation for CQRS and Event Sourced Application</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        color: #455A64;
+      }
+
+      body {
+        font-family: 'Droid Serif';
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: 400;
+        margin-bottom: 0;
+      }
+      .remark-slide-content h1 { font-size: 3em; }
+      .remark-slide-content h2 { font-size: 2em; }
+      .remark-slide-content h3 { font-size: 1.6em; }
+      .footnote {
+        position: absolute;
+        bottom: 3em;
+      }
+      li p { line-height: 1.25em; }
+      .red { color: #fa0000; }
+      .large { font-size: 2em; }
+      a, a > code {
+        color: #2180CC;
+        text-decoration: none;
+      }
+
+      .inverse a, .inverse  a > code {
+        color: #ECECEC;
+        text-decoration: none;
+      }
+      code {
+        background: #e7e8e2;
+        border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .remark-code-line-highlighted     { background-color: #373832; }
+      .pull-left {
+        float: left;
+        width: 47%;
+      }
+      .pull-right {
+        float: right;
+        width: 47%;
+      }
+      .pull-right ~ p {
+        clear: both;
+      }
+      #slideshow .slide .content code {
+        font-size: 0.8em;
+      }
+      #slideshow .slide .content pre code {
+        font-size: 0.9em;
+        padding: 15px;
+      }
+      .inverse {
+        background: #455A64;
+        color: #FFFFFF;
+        text-shadow: 0 0 20px #333;
+      }
+      .inverse h1, .inverse h2 {
+        color: #f3f3f3;
+        line-height: 0.8em;
+      }
+
+      /* Slide-specific styling */
+      #slide-inverse .footnote {
+        bottom: 12px;
+        left: 20px;
+      }
+      #slide-how .slides {
+        font-size: 0.9em;
+        position: absolute;
+        top:  151px;
+        right: 140px;
+      }
+      #slide-how .slides h3 {
+        margin-top: 0.2em;
+      }
+      #slide-how .slides .first, #slide-how .slides .second {
+        padding: 1px 20px;
+        height: 90px;
+        width: 120px;
+        -moz-box-shadow: 0 0 10px #777;
+        -webkit-box-shadow: 0 0 10px #777;
+        box-shadow: 0 0 10px #777;
+      }
+      #slide-how .slides .first {
+        background: #fff;
+        position: absolute;
+        top: 20%;
+        left: 20%;
+        z-index: 1;
+      }
+      #slide-how .slides .second {
+        position: relative;
+        background: #fff;
+        z-index: 0;
+      }
+
+      /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 25%;
+        height: 92%;
+        float: left;
+      }
+        .left-column h2:last-of-type, .left-column h3:last-child {
+          color: #000;
+        }
+      .right-column {
+        width: 70%;
+        float: right;
+        padding-top: 1em;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+
+      b, strong { color:  #303F9F; }
+
+      .focus { 
+        color:  #B10013;
+       }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+name: inverse
+layout: true
+class: center, middle, inverse
+
+---
+# A Functional Foundation 
+# for CQRS and Event Sourced Application
+
+
+---
+layout:false
+
+# Who am I?
+
+Renato Cavalcanti  
+
+* Author of **[Fun.CQRS](https://github.com/strongtyped/fun-cqrs)**
+* Co-founder of **[Strong[Typed]](http://www.strongtyped.io)**  
+* Founder of **[BeScala](http://www.bescala.org)**, the Belgian Scala User Group  
+
+[renato@strongtyped.io](mailto://renato@strongtyped.io)  
+[@renatocaval](http://twitter.com/renatocaval)   
+
+
+---
+layout: false
+# Agenda 
+
+1. Motivation (Fun.CQRS)
+
+2. Short Intro to Command Side
+
+3. An Aggregate aggregates it's past events
+
+4. Effects, IO and Error Handling
+
+---
+
+class: left, top
+# What is CQRS / ES? 
+
+## Command Query Responsibility Segregation
+
+  - two models:  
+    **Command** or **Write** model  
+    **Query** or **Read** model  
+
+  - on the **Write Side** we receive **Commands** and emit **Events**  
+
+  - on the **Read Side** we consume **Events** and generate **Views**
+    
+  
+   
+  
+## Event Sourcing
+  - **Event Sourcing** happens when you store every single domain event. 
+---
+
+class: left, top
+# What is CQRS / ES? 
+
+## Command Query Responsibility Segregation
+
+  - two models:  
+    **Command** or **Write** model  
+    ~~**Query** or **Read** model~~
+
+  - on the **Write Side** we receive **Commands** and emit **Events**  
+
+  - ~~on the **Read Side** we consume **Events** and generate **Views**~~
+
+  Today we concentrate on the Command side only
+
+## Event Sourcing
+  - **Event Sourcing** happens when you store every single domain event. 
+
+---
+layout: false
+## Aggregates, Command and Event Handlers
+
+- We define **Command** and **Events Handlers** for an **Aggregate**
+
+- A **Command Handler** receives a `Command` and may emit one or more `Events`
+
+- An **Event Handler** receives an `Event` and updates the `Aggregate`
+
+---
+layout: false
+# Two basic functions and a derived one
+
+```scala
+type Events = Seq[Event]
+
+// Command Handler, validate and emits events
+Aggregate => Command => Events         
+
+// Event Handler, apply and updates Aggregate state
+Aggregate => Event => Aggregate        
+
+// from which we can derive
+Aggregate => Command => (Aggregate, Events)
+```
+
+---
+layout: false
+# A Command can be rejected
+```scala
+type Events = Seq[Event]
+
+// Command Handler, validate and emits events
+// returns events wrapped in F (Future, Try, Option, etc)
+Aggregate => Command => F[Events] 
+
+// Event Handler, updates Aggregate state
+Aggregate => Event => Aggregate // Event Handler
+
+// from which we can derive
+Aggregate => Command => F[(Aggregate, Events)]
+```
+Where `F` is any type that can express a successful computation or a failure.  
+Or in the case of `Option`, a type that can express some outcome or none.  
+Or it can be just `Identity`, if it always return `Events`.
+
+---
+layout: false
+# In the begining there is None
+
+```scala
+type Events = Seq[Event]
+type State = Option[Aggregate]
+
+// Command Handler, validate and emits events
+State => Command => F[Events] 
+
+// Event Handler, updates Aggregate state
+State => Event => State // Event Handler
+
+// from which we can derive
+State => Command => F[(State, Events)]
+```
+
+---
+layout: false
+# An Aggregate aggregates its past
+
+```scala
+type History = Seq[Event] // all events since the seed-event
+type State = Option[Aggregate]
+ 
+// Event Handler,  updates Aggregate state
+State => Event => State
+```
+
+* when **History** == **Seq.empty**   
+  than **Option[Aggregate]** == **None**
+
+* when **History** != **Seq.empty**  
+  than **Option[Aggregate]** == **Some[Aggregate]**
+
+* given any **History** and a **Event Handler**   
+we can `foldLeft` over the past events and reconstruct the `Aggregate`.  
+
+---
+layout: false
+
+```scala
+type History = Seq[Event] // all events since the seed-event
+type State = Option[Aggregate]
+
+// Event Handler, augments (append) the history
+State => Event => State
+
+// from previous events to current state
+// via foldLeft backed by Event Handler
+History => State
+
+// Command Handler, validate and emits events
+State => Command => F[Events] 
+
+History => State => Command => F[Events] 
+
+// given a History and a Command
+// we may produce an augmented History
+History => Command => F[History]
+```
+
+---
+layout: false
+
+# Effects
+
+`F` may take different forms
+
+* **Future** or **Try** if it may fail (async or sync)
+
+* It can be an **Option** if it emits something or nothing, but never fails
+
+* **Identity** if it always emits something and never fails.  
+  `type Identity[T] = T`
+
+* Your applicative of choice.   
+  `type Result[T] = cats.Validated[Errors, T]`
+
+The same model may use different `F` depending on the incoming `Command`
+
+```scala
+case class Natural(i: Int)
+
+Natural => Add => Identity[Added] // F = Identity
+Natural => Devide => Try[Devided] // F = Try
+
+```
+---
+layout:false
+
+# Backend
+
+There is lots of IO and repetive boilerplate. 
+
+* we must read events from journal to reconstruct `State`
+* we must apply commands (eventually async)
+* we must persist events before we continue
+* a backend must be able to interpret all possible incarnations of `F`
+
+A backend should provide the bits that are always the same (IO, infrastructure, error Handling).
+
+Developers should focus in modeling **Aggregates**, **Command Handlers** and **Event Handlers**.
+
+---
+layout:false
+
+# Upcoming talks
+
+# Scala Days - Copenhagen
+[Reification and type-safety in a CQRS world](http://event.scaladays.org/scaladays-cph-2017#!#schedulePopupExtras-8164)  
+
+[http://scaladays.org/](http://scaladays.org/)
+
+# Scala Swarm - Porto
+
+[Fun.CQRS Workshop](https://ti.to/scalaswarm/2017)
+
+[http://scala-swarm.org/](http://scala-swarm.org/)  
+
+
+---
+class: center, top
+layout:false
+
+# Thank You!
+
+Renato Cavalcanti  
+[renato@strongtyped.io](mailto://renato@strongtyped.io)  
+[@renatocaval](http://twitter.com/renatocaval)   
+  
+[github.com/strongtyped/fun-cqrs](https://github.com/strongtyped/fun-cqrs)
+
+[github.com/strongtyped/functional-foundation-cqrs-es](https://github.com/strongtyped/functional-foundation-cqrs-es)
+
+    </textarea>
+    <script src="js/remark.min.js">
+  </script>
+  <script>
+    var slideshow = remark.create({
+      ratio: '4:3',
+      //ratio: '16:9',
+      highlightLanguage: 'scala',
+      // Plausible style for blue background:
+      highlightStyle: 'github'
+      });
+  </script>
+  </body>
+</html>
