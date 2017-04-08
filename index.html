@@ -353,7 +353,7 @@ Natural => Devide => Try[Devided] // F = Try
 ---
 layout:false
 
-# Backend
+# It's an impure world
 
 There is lots of IO and repetive boilerplate. 
 
@@ -362,7 +362,7 @@ There is lots of IO and repetive boilerplate.
 * we must persist events before we continue
 * a backend must be able to interpret all possible incarnations of `F`
 
-A backend should provide the bits that are always the same (IO, infrastructure, error Handling).
+A backend should provide the bits that are always the same (IO, infrastructure, error handling).
 
 Developers should focus in modeling **Aggregates**, **Command Handlers** and **Event Handlers**.
 
