@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>A Functional Foundation for CQRS and Event Sourced Application</title>
+    <title>A Functional Foundation Event Sourced Applications</title>
     <meta charset="utf-8">
     <style>
       @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
@@ -130,7 +130,7 @@
 
       b, strong { color:  #303F9F; }
 
-      .focus { 
+      .focus {
         color:  #B10013;
        }
     </style>
@@ -143,8 +143,8 @@ layout: true
 class: center, middle, inverse
 
 ---
-# A Functional Foundation 
-# for CQRS and Event Sourced Application
+# A Functional Foundation
+# for Event Sourced Applications
 
 
 ---
@@ -152,19 +152,20 @@ layout:false
 
 # Who am I?
 
-Renato Cavalcanti  
+Renato Cavalcanti
 
 * Author of **[Fun.CQRS](https://github.com/strongtyped/fun-cqrs)**
-* Co-founder of **[Strong[Typed]](http://www.strongtyped.io)**  
-* Founder of **[BeScala](http://www.bescala.org)**, the Belgian Scala User Group  
+* **[Lagom](https://www.lagomframework.com/)** Contributor
+* Co-founder of **[Strong[Typed]](http://www.strongtyped.io)**
+* Founder of **[BeScala](http://www.bescala.org)**, the Belgian Scala User Group
 
 [renato@strongtyped.io](mailto://renato@strongtyped.io)  
-[@renatocaval](http://twitter.com/renatocaval)   
+[@renatocaval](http://twitter.com/renatocaval)
 
 
 ---
 layout: false
-# Agenda 
+# Agenda
 
 1. Motivation (Fun.CQRS)
 
@@ -177,42 +178,42 @@ layout: false
 ---
 
 class: left, top
-# What is CQRS / ES? 
+# What is CQRS / ES?
 
 ## Command Query Responsibility Segregation
 
-  - two models:  
-    **Command** or **Write** model  
-    **Query** or **Read** model  
+  - two models:
+    **Command** or **Write** model
+    **Query** or **Read** model
 
-  - on the **Write Side** we receive **Commands** and emit **Events**  
+  - on the **Write Side** we receive **Commands** and emit **Events**
 
   - on the **Read Side** we consume **Events** and generate **Views**
-    
-  
-   
-  
+
+
+
+
 ## Event Sourcing
-  - **Event Sourcing** happens when you store every single domain event. 
+  - **Event Sourcing** happens when you store every single domain event.
 ---
 
 class: left, top
-# What is CQRS / ES? 
+# What is CQRS / ES?
 
 ## Command Query Responsibility Segregation
 
-  - two models:  
-    **Command** or **Write** model  
+  - two models:
+    **Command** or **Write** model
     ~~**Query** or **Read** model~~
 
-  - on the **Write Side** we receive **Commands** and emit **Events**  
+  - on the **Write Side** we receive **Commands** and emit **Events**
 
   - ~~on the **Read Side** we consume **Events** and generate **Views**~~
 
   Today we concentrate on the Command side only
 
 ## Event Sourcing
-  - **Event Sourcing** happens when you store every single domain event. 
+  - **Event Sourcing** happens when you store every single domain event.
 
 ---
 layout: false
@@ -232,10 +233,10 @@ layout: false
 type Events = Seq[Event]
 
 // Command Handler, validate and emits events
-Aggregate => Command => Events         
+Aggregate => Command => Events
 
 // Event Handler, apply and updates Aggregate state
-Aggregate => Event => Aggregate        
+Aggregate => Event => Aggregate
 
 // from which we can derive
 Aggregate => Command => (Aggregate, Events)
@@ -249,7 +250,7 @@ type Events = Seq[Event]
 
 // Command Handler, validate and emits events
 // returns events wrapped in F (Future, Try, Option, etc)
-Aggregate => Command => F[Events] 
+Aggregate => Command => F[Events]
 
 // Event Handler, updates Aggregate state
 Aggregate => Event => Aggregate // Event Handler
@@ -257,8 +258,8 @@ Aggregate => Event => Aggregate // Event Handler
 // from which we can derive
 Aggregate => Command => F[(Aggregate, Events)]
 ```
-Where `F` is any type that can express a successful computation or a failure.  
-Or in the case of `Option`, a type that can express some outcome or none.  
+Where `F` is any type that can express a successful computation or a failure.
+Or in the case of `Option`, a type that can express some outcome or none.
 Or it can be just `Identity`, if it always return `Events`.
 
 ---
@@ -270,7 +271,7 @@ type Events = Seq[Event]
 type State = Option[Aggregate]
 
 // Command Handler, validate and emits events
-State => Command => F[Events] 
+State => Command => F[Events]
 
 // Event Handler, updates Aggregate state
 State => Event => State // Event Handler
@@ -286,19 +287,26 @@ layout: false
 ```scala
 type History = Seq[Event] // all events since the seed-event
 type State = Option[Aggregate]
- 
+
 // Event Handler,  updates Aggregate state
 State => Event => State
 ```
 
-* when **History** == **Seq.empty**   
-  than **Option[Aggregate]** == **None**
+* when **History** == **Seq.empty**  
+  then **Option[Aggregate]** == **None**
 
 * when **History** != **Seq.empty**  
-  than **Option[Aggregate]** == **Some[Aggregate]**
+  then **Option[Aggregate]** == **Some[Aggregate]**
 
-* given any **History** and a **Event Handler**   
-we can `foldLeft` over the past events and reconstruct the `Aggregate`.  
+* given any **History** and a **Event Handler**  
+  we can `foldLeft` over the past events and reconstruct the `Aggregate`.
+
+```scala
+  val eventHandler: State => Event => State = ...
+  val pastEvents: History = ...
+
+  pastEvents.foldLeft(None:State) { (agg, evt) => eventHandler(agg)(evt) }
+```
 
 ---
 layout: false
@@ -315,9 +323,9 @@ State => Event => State
 History => State
 
 // Command Handler, validate and emits events
-State => Command => F[Events] 
+State => Command => F[Events]
 
-History => State => Command => F[Events] 
+History => State => Command => F[Events]
 
 // given a History and a Command
 // we may produce an augmented History
@@ -338,7 +346,7 @@ layout: false
 * **Identity** if it always emits something and never fails.  
   `type Identity[T] = T`
 
-* Your applicative of choice.   
+* Your applicative of choice.  
   `type Result[T] = cats.Validated[Errors, T]`
 
 The same model may use different `F` depending on the incoming `Command`
@@ -346,16 +354,53 @@ The same model may use different `F` depending on the incoming `Command`
 ```scala
 case class Natural(i: Int)
 
-Natural => Add => Identity[Added] // F = Identity
-Natural => Devide => Try[Devided] // F = Try
+Option[Natural] => Add => Identity[Added] // F = Identity
+Option[Natural] => Add => Added // or simply
+
+Option[Natural] => Devide => Try[Divided] // F = Try
 
 ```
 ---
 layout:false
 
+# Being Opinionated
+
+Those are the foundation functions, but you may implement it in many different forms
+according to your style, taste or API experience you want to provide.
+
+```scala
+
+// command handler
+Option[Aggregate] => Command => F[Events]
+// event handler
+Option[Aggregate] => Event => Option[Aggregate]
+```
+
+## Can be replaced by...
+
+```scala
+// command handlers
+Command => F[Events] // from None to Events
+Aggregate => Command => F[Events] // from Some to Events
+
+// event handler
+Event => Aggregate /// from None to Some
+Aggregate => Event => Aggregate // from Some to Some
+Aggregate => Event => Unit // from Some to None
+
+```
+???
+The point is, you don't have to stick with those functions
+but somehow you will end-up have them even if it's only conceptually.
+
+When building Fun.CQRS we found that it was annoying to always 
+pattern match on Option[Aggregate] when defining command handlers and event handlers.
+---
+layout:false
+
 # It's an impure world
 
-There is lots of IO and repetive boilerplate. 
+There is lots of IO and repetive boilerplate.
 
 * we must read events from journal to reconstruct `State`
 * we must apply commands (eventually async)
@@ -369,18 +414,18 @@ Developers should focus in modeling **Aggregates**, **Command Handlers** and **E
 ---
 layout:false
 
-# Upcoming talks
+# What's next?
 
-# Scala Days - Copenhagen
-[Reification and type-safety in a CQRS world](http://event.scaladays.org/scaladays-cph-2017#!#schedulePopupExtras-8164)  
+### GitHub
+[github.com/strongtyped/fun-cqrs](https://github.com/strongtyped/fun-cqrs)  
+[github.com/strongtyped/functional-foundation-cqrs-es](https://github.com/strongtyped/functional-foundation-cqrs-es)
 
-[http://scaladays.org/](http://scaladays.org/)
+## Related Blog:
+### Building a CQRS/ES Framework
+[http://bit.ly/cqrs-es-part1](http://bit.ly/cqrs-es-part1)
 
-# Scala Swarm - Porto
-
-[Fun.CQRS Workshop](https://ti.to/scalaswarm/2017)
-
-[http://scala-swarm.org/](http://scala-swarm.org/)  
+## Upcoming talks
+None!! I will enjoy summer now! ;-)
 
 
 ---
@@ -389,12 +434,12 @@ layout:false
 
 # Thank You!
 
-Renato Cavalcanti  
-[renato@strongtyped.io](mailto://renato@strongtyped.io)  
-[@renatocaval](http://twitter.com/renatocaval)   
-  
-[github.com/strongtyped/fun-cqrs](https://github.com/strongtyped/fun-cqrs)
+Renato Cavalcanti
 
+[renato@strongtyped.io](mailto://renato@strongtyped.io)  
+[@renatocaval](http://twitter.com/renatocaval)
+
+[github.com/strongtyped/fun-cqrs](https://github.com/strongtyped/fun-cqrs)  
 [github.com/strongtyped/functional-foundation-cqrs-es](https://github.com/strongtyped/functional-foundation-cqrs-es)
 
     </textarea>
